@@ -1,21 +1,22 @@
+// depends on util.js, board.js
+
 function SGF() {
     this.size = 19;
     this.root_move = null;
     this.white_player = "White";
     this.black_player = "Black";
 }
-function Move() {
+function Move(sgf) {
+    this.sgf = sgf;
+    this.position = null;
+    this.color = null;
     this.previous_move = null;
-    this.next_moves = [];
+    this._next_moves = [];
 }
 Move.prototype.addNextMove = function(next_mv) {
-    this.next_moves.push(next_mv);
+    this._next_moves.push(next_mv);
 }
-
-function warn(msg) {
-    if (console && console.warn) {
-        console.warn(msg);
-    }
+Move.prototype.getBoard = function(board) {
 }
 
 // Brute force tokenize SGFs
@@ -90,7 +91,7 @@ function parseSgfData(sgf_data) {
     var sgf_tokens = tokenizeSgfData(sgf_data),
         variation_stack = [],
         sgf = new SGF(),
-        token, last_mv, cur_mv, root_mv,
+        token, last_mv, cur_mv,
         method, value;
     for (var i = 0; i < sgf_tokens.length; i++) {
         token = sgf_tokens[i];
@@ -104,9 +105,9 @@ function parseSgfData(sgf_data) {
             }
         } else if (token === ";") {
             last_mv = cur_mv;
-            cur_mv = new Move();
-            if (typeof root_mv === "undefined") {
-                root_mv = cur_mv;
+            cur_mv = new Move(sgf);
+            if (sgf.root_move === null) {
+                sgf.root_move = cur_mv;
             }
             if (last_mv) {
                 last_mv.addNextMove(cur_mv);
@@ -115,8 +116,9 @@ function parseSgfData(sgf_data) {
         } else {
             method = method_value[0];
             value = method_value[1];
-            if (method === "B") {
-            } else if (method === "W") {
+            if (method === "B" || method === "W") {
+                this.color = method;
+                this.position = value;
             } else if (method === "C") {
             } else if (method === "AB") {
                 // add black
@@ -183,4 +185,5 @@ function parseSgfData(sgf_data) {
             }
         }
     }
+    return sgf;
 }
