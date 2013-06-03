@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Test SGF</title>
+<link rel="stylesheet" href="qunit-1.11.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture"></div>
+<script src="qunit-1.11.0.js"></script>
+<script src="../src/sgf.js"></script>
+<script>
+test("Tokenizing", function() {
+    throws(function() {tokenizeSgfData("hello")}, "Simple string throws bad sgf exception");
+    deepEqual(tokenizeSgfData("(;)"), ["(", ";", ")"], "Simple SGF tokenizes");
+    deepEqual(tokenizeSgfData("()"), ["(", ")"], "Simple SGF tokenizes");
+    deepEqual(
+        tokenizeSgfData("(;B[ji]C[now with escaped \\]!])"),
+        ["(", ";", "B[ji]", "C[now with escaped ]!]", ")"],
+        "Square bracket escapes"
+    );
+    deepEqual(
+        tokenizeSgfData("(;B[ji]C[now with escaped \\]!\\\\])"),
+        ["(", ";", "B[ji]", "C[now with escaped ]!\\]", ")"],
+        "Escaped escape"
+    );
+    throws(function() {tokenizeSgfData(")")}, "Single unmatched parenthesis throws bad sgf exception");
+    throws(function() {tokenizeSgfData(")(")}, "Weird parenthesis throws bad sgf exception");
+    throws(function() {tokenizeSgfData("(()")}, "Unmatched parenthesis throws bad sgf exception");
+    throws(function() {tokenizeSgfData("())(()")}, "Weird parenthesis throws bad sgf exception");
+});
+test("Parsing", function() {
+    throws(function() {parseMethodValue("failtoken")}, "Throws on no value");
+    throws(function() {parseMethodValue("fail token[hello]")}, "Throws on space in method");
+    deepEqual(
+        parseMethodValue("C[something something]"),
+        ["C", "something something"],
+        "Parses normal comment"
+    );
+});
+</script>
+</body>
+</html>
