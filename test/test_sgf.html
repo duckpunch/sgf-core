@@ -12,6 +12,7 @@
 <script src="../src/util.js"></script>
 <script src="../src/board.js"></script>
 <script src="../src/sgf.js"></script>
+<script src="test_util.js"></script>
 <script>
 test("Tokenizing", function() {
     throws(function() {tokenizeSgfData("hello")}, "Simple string throws bad sgf exception");
@@ -39,6 +40,28 @@ test("Parsing", function() {
         parseMethodValue("C[something something]"),
         ["C", "something something"],
         "Parses normal comment"
+    );
+});
+test("Node Creation", function() {
+    ok(
+        treeStructureMatches(
+            parseSgfData("(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]RU[Japanese]SZ[19]KM[0.00];B[dd];W[pp];B[dp])").root_move,
+            buildMoveTree([mv(), mv("dd"), mv("pp"), mv("dp")])
+        ),
+        "Basic sequence parses"
+    );
+    ok(
+        treeStructureMatches(
+            parseSgfData("(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]RU[Japanese]SZ[19]KM[0.00];B[dd];W[pp](;B[dp])(;B[pd]))").root_move,
+            buildMoveTree([
+                mv(), mv("dd"), mv("pp"),
+                [
+                    [ mv("dp") ],
+                    [ mv("pd") ]
+                ]
+            ])
+        ),
+        "Simple variation"
     );
 });
 </script>

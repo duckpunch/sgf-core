@@ -6,8 +6,8 @@ function SGF() {
     this.white_player = "White";
     this.black_player = "Black";
 }
-function Move(sgf) {
-    this.sgf = sgf;
+function Move() {
+    this.sgf = null;
     this.position = null;
     this.color = null;
     this.previous_move = null;
@@ -15,6 +15,7 @@ function Move(sgf) {
 }
 Move.prototype.addNextMove = function(next_mv) {
     this._next_moves.push(next_mv);
+    next_mv.previous_move = this;
 }
 Move.prototype.getBoard = function(board) {
 }
@@ -78,7 +79,7 @@ function tokenizeSgfData(sgf_data) {
 }
 
 function parseMethodValue(token) {
-    var valid_token = /^(\w)+\[(.*)\]$/,
+    var valid_token = /^(\w+)\[(.*)\]$/,
         mv_match = token.match(valid_token);
     if (mv_match && mv_match.length == 3) {
         return mv_match.slice(1);
@@ -92,7 +93,7 @@ function parseSgfData(sgf_data) {
         variation_stack = [],
         sgf = new SGF(),
         token, last_mv, cur_mv,
-        method, value;
+        method, value, method_value;
     for (var i = 0; i < sgf_tokens.length; i++) {
         token = sgf_tokens[i];
         if (token === "(") {
@@ -105,20 +106,21 @@ function parseSgfData(sgf_data) {
             }
         } else if (token === ";") {
             last_mv = cur_mv;
-            cur_mv = new Move(sgf);
+            cur_mv = new Move();
+            cur_mv.sgf = sgf;
             if (sgf.root_move === null) {
                 sgf.root_move = cur_mv;
             }
             if (last_mv) {
                 last_mv.addNextMove(cur_mv);
-                cur_mv.previous_move = last_mv;
             }
         } else {
+            method_value = parseMethodValue(token);
             method = method_value[0];
             value = method_value[1];
             if (method === "B" || method === "W") {
-                this.color = method;
-                this.position = value;
+                cur_mv.color = method;
+                cur_mv.position = value;
             } else if (method === "C") {
             } else if (method === "AB") {
                 // add black
