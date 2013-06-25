@@ -13,57 +13,6 @@
 <script src="../src/board.js"></script>
 <script src="../src/sgf.js"></script>
 <script src="test_util.js"></script>
-<script>
-test("Tokenizing", function() {
-    throws(function() {tokenizeSgfData("hello")}, "Simple string throws bad sgf exception");
-    deepEqual(tokenizeSgfData("(;)"), ["(", ";", ")"], "Simple SGF tokenizes");
-    deepEqual(tokenizeSgfData("()"), ["(", ")"], "Simple SGF tokenizes");
-    deepEqual(
-        tokenizeSgfData("(;B[ji]C[now with escaped \\]!])"),
-        ["(", ";", "B[ji]", "C[now with escaped ]!]", ")"],
-        "Square bracket escapes"
-    );
-    deepEqual(
-        tokenizeSgfData("(;B[ji]C[now with escaped \\]!\\\\])"),
-        ["(", ";", "B[ji]", "C[now with escaped ]!\\]", ")"],
-        "Escaped escape"
-    );
-    throws(function() {tokenizeSgfData(")")}, "Single unmatched parenthesis throws bad sgf exception");
-    throws(function() {tokenizeSgfData(")(")}, "Weird parenthesis throws bad sgf exception");
-    throws(function() {tokenizeSgfData("(()")}, "Unmatched parenthesis throws bad sgf exception");
-    throws(function() {tokenizeSgfData("())(()")}, "Weird parenthesis throws bad sgf exception");
-});
-test("Parsing", function() {
-    throws(function() {parseMethodValue("failtoken")}, "Throws on no value");
-    throws(function() {parseMethodValue("fail token[hello]")}, "Throws on space in method");
-    deepEqual(
-        parseMethodValue("C[something something]"),
-        ["C", "something something"],
-        "Parses normal comment"
-    );
-});
-test("Node Creation", function() {
-    ok(
-        treeStructureMatches(
-            parseSgfData("(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]RU[Japanese]SZ[19]KM[0.00];B[dd];W[pp];B[dp])").root_move,
-            buildMoveTree([mv(), mv("dd"), mv("pp"), mv("dp")])
-        ),
-        "Basic sequence parses"
-    );
-    ok(
-        treeStructureMatches(
-            parseSgfData("(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]RU[Japanese]SZ[19]KM[0.00];B[dd];W[pp](;B[dp])(;B[pd]))").root_move,
-            buildMoveTree([
-                mv(), mv("dd"), mv("pp"),
-                [
-                    [ mv("dp") ],
-                    [ mv("pd") ]
-                ]
-            ])
-        ),
-        "Simple variation"
-    );
-});
-</script>
+<script src="test_sgf.js"></script>
 </body>
 </html>

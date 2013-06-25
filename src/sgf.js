@@ -1,23 +1,63 @@
 // depends on util.js, board.js
-
 function SGF() {
     this.size = 19;
     this.root_move = null;
     this.white_player = "White";
     this.black_player = "Black";
 }
+
+SGF.prototype.getBlankBoard = function() {
+    return new Board(this.size);
+}
+
 function Move() {
     this.sgf = null;
     this.position = null;
     this.color = null;
     this.previous_move = null;
+    this.comment = "";
     this._next_moves = [];
+    this._static_white = [];
+    this._static_black = [];
+    this._static_empty = [];
+    this._cached_serialized_board = null;
 }
+
 Move.prototype.addNextMove = function(next_mv) {
     this._next_moves.push(next_mv);
     next_mv.previous_move = this;
 }
-Move.prototype.getBoard = function(board) {
+
+Move.prototype.getBoard = function() {
+    var board;
+    if (this._cached_serialized_board) {
+        board = this.sgf.getBlankBoard();
+        board.deserialize(this._cached_serialized_board);
+        return board;
+    } else {
+        if (this.previous_move) {
+            board = this.previous_move.getBoard();
+        } else {
+            board = this.sgf.getBlankBoard();
+        }
+
+        this.applyToBoard(board)
+        this._cached_serialized_board = board.serialize();
+        return board;
+    }
+}
+
+Move.prototype.applyToBoard = function(board) {
+    var quiet_remove = partial(board.removeStoneBySgf, [undefined, true], board),
+        quiet_add_black = partial(board.addStoneBySgf, [undefined, 'b', true], board),
+        quiet_add_white = partial(board.addStoneBySgf, [undefined, 'w', true], board);
+    this._static_empty.forEach(quiet_remove);
+    this._static_black.forEach(quiet_add_black);
+    this._static_white.forEach(quiet_add_white);
+    if (this.position) {
+        board.addStoneBySgf(this.position, this.color, true);
+    }
+    board.changed();
 }
 
 // Brute force tokenize SGFs
@@ -79,7 +119,7 @@ function tokenizeSgfData(sgf_data) {
 }
 
 function parseMethodValue(token) {
-    var valid_token = /^(\w+)\[(.*)\]$/,
+    var valid_token = /^(\w*)\[(.*)\]$/,
         mv_match = token.match(valid_token);
     if (mv_match && mv_match.length == 3) {
         return mv_match.slice(1);
@@ -116,16 +156,21 @@ function parseSgfData(sgf_data) {
             }
         } else {
             method_value = parseMethodValue(token);
-            method = method_value[0];
+            method = method_value[0] || method;
             value = method_value[1];
+
+            // full spec at http://www.red-bean.com/sgf/properties.html
             if (method === "B" || method === "W") {
-                cur_mv.color = method;
+                cur_mv.color = method.toLowerCase();
                 cur_mv.position = value;
             } else if (method === "C") {
+                cur_mv.comment = value;
             } else if (method === "AB") {
-                // add black
+                cur_mv._static_black.push(value);
             } else if (method === "AW") {
-                // add white
+                cur_mv._static_white.push(value);
+            } else if (method === "AE") {
+                cur_mv._static_empty.push(value);
             } else if (method === "TR") {
                 // triangle
             } else if (method === "SQ") {
@@ -146,6 +191,11 @@ function parseSgfData(sgf_data) {
                 if (value !== "1") {
                     throw "SGF type is not Go!";
                 }
+            } else if (method === "ST") {
+                // variation mode, not supported
+                // TODO support this maybe
+            } else if (method === "CA") {
+                // charset
             } else if (method === "RU") {
                 // ruleset
             } else if (method === "PW") {

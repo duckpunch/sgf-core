@@ -54,3 +54,26 @@ function mv(position) {
     move.position = position || null;
     return move;
 }
+
+function test_print_board(board) {
+    for (var i = 0; i < board.stones.length; i++) {
+        var row = '';
+        for (var j = 0; j < board.stones[i].length; j++) {
+            var stone = board.stones[i][j];
+            if (!stone) {
+                row += '+ ';
+            } else {
+                row += stone.color == 'b'?'o ':'x ';
+            }
+        }
+        console.log(row);
+    }
+}
+
+function get_last_node(sgf) {
+    var move = sgf.root_move;
+    while (move._next_moves.length > 0) {
+        move = move._next_moves[0];
+    }
+    return move;
+}

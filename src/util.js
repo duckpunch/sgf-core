@@ -1,3 +1,15 @@
+// Adapted from http://osteele.com/sources/javascript/functional/
+// Also http://ejohn.org/blog/partial-functions-in-javascript/
+function partial(fn, default_args, _this) {
+    return function() {
+        var arg = 0, args = default_args.slice(0);
+        for (var i = 0; i < args.length && arg < arguments.length; i++)
+            if (args[i] === undefined)
+                args[i] = arguments[arg++];
+        return fn.apply(_this || this, args);
+    };
+}
+
 function sgfToXy(sgf_coord) {
     if (sgf_coord) {
         return [sgf_coord.charCodeAt(0) - 97, sgf_coord.charCodeAt(1) - 97];

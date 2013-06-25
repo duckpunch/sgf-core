@@ -37,6 +37,19 @@ Board.prototype.clearBoard = function() {
     }
 }
 
+Board.prototype.changed = function() {
+    this.dispatchEvent("change");
+}
+
+Board.prototype.stoneAt = function(x, y) {
+    return this.stones[x][y];
+}
+
+Board.prototype.stoneAtSgf = function(sgf_coord) {
+    var xy = sgfToXy(sgf_coord);
+    return this.stoneAt(xy[0], xy[1]);
+}
+
 Board.prototype.addStone = function(x, y, color, suppress_change_event) {
     if (x < this.stones.length && y < this.stones.length && !this.stones[x][y]) {
         var stone = new Stone(x, y, this, color);
@@ -45,8 +58,28 @@ Board.prototype.addStone = function(x, y, color, suppress_change_event) {
         stone.killNeighbors();
     }
     if (!suppress_change_event) {
-        this.dispatchEvent("change");
+        this.changed();
     }
+}
+
+Board.prototype.addStoneBySgf = function(sgf_coord, color, suppress_change_event) {
+    var xy = sgfToXy(sgf_coord);
+    this.addStone(xy[0], xy[1], color, suppress_change_event);
+}
+
+Board.prototype.removeStone = function(x, y, suppress_change_event) {
+    var stone = this.stones[x][y];
+    if (stone) {
+        stone.removeFromBoard();
+    }
+    if (!suppress_change_event) {
+        this.changed();
+    }
+}
+
+Board.prototype.removeStoneBySgf = function (sgf_coord, suppress_change_event) {
+    var xy = sgfToXy(sgf_coord);
+    this.removeStone(xy[0], xy[1], suppress_change_event);
 }
 
 Board.prototype.serialize = function() {
@@ -81,7 +114,7 @@ Board.prototype.deserialize = function(raw) {
             board.addStone(coord.x, coord.y, "b", true);
         });
     }
-    this.dispatchEvent("change");
+    this.changed();
 }
 
 function Stone(x, y, board, color) {
@@ -168,7 +201,8 @@ Stone.prototype.hasLiberty = function() {
 }
 
 Stone.prototype.die = function() {
-    // FIXME
+    // FIXME - weird signature - this is because of an overloading
+    // perhaps an inheritance structure is in order?
     this.removeFromBoard();
     return [[this]];
 }
