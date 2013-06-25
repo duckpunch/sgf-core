@@ -4,6 +4,9 @@ function SGF() {
     this.root_move = null;
     this.white_player = "White";
     this.black_player = "Black";
+    this.handicap = 0;
+    this.ruleset = "Japanese";
+    this.komi = 0;
 }
 
 SGF.prototype.getBlankBoard = function() {
@@ -16,6 +19,11 @@ function Move() {
     this.color = null;
     this.previous_move = null;
     this.comment = "";
+    this.labels = [];
+    this.triangles = [];
+    this.circles = [];
+    this.squares = [];
+    this.x_marks = [];
     this._next_moves = [];
     this._static_white = [];
     this._static_black = [];
@@ -172,15 +180,15 @@ function parseSgfData(sgf_data) {
             } else if (method === "AE") {
                 cur_mv._static_empty.push(value);
             } else if (method === "TR") {
-                // triangle
+                cur_mv.triangles.push(value);
             } else if (method === "SQ") {
-                // square
+                cur_mv.squares.push(value);
             } else if (method === "CR") {
-                // circle
+                cur_mv.circles.push(value);
             } else if (method === "MA") {
-                // "X" mark
+                cur_mv.x_marks.push(value);
             } else if (method === "LB") {
-                // label
+                cur_mv.labels.push(value);
             } else if (method === "SZ") {
                 sgf.size = parseInt(value);
             } else if (method === "FF") {
@@ -197,15 +205,15 @@ function parseSgfData(sgf_data) {
             } else if (method === "CA") {
                 // charset
             } else if (method === "RU") {
-                // ruleset
+                sgf.ruleset = value
             } else if (method === "PW") {
                 sgf.white_player = value;
             } else if (method === "PB") {
                 sgf.black_player = value;
             } else if (method === "HA") {
-                // handicap
+                sgf.handicap = value
             } else if (method === "KM") {
-                // komi
+                sgf.komi = value
             } else if (method === "TM") {
                 // time limit
             } else if (method === "OT") {
