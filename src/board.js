@@ -1,4 +1,4 @@
-function Board(size) {
+go.Board = function(size) {
     this.size = parseInt(size) || 19;
     this.stones = null;
     this.annotations = null;
@@ -8,12 +8,12 @@ function Board(size) {
     this.clearAnnotations();
 }
 
-Board.prototype.addEventListener = function(event_name, callback) {
+go.Board.prototype.addEventListener = function(event_name, callback) {
     var callbacks = this._events[event_name] = this._events[event_name] || [];
     callbacks.push(callback);
 }
 
-Board.prototype.dispatchEvent = function(event_name, args) {
+go.Board.prototype.dispatchEvent = function(event_name, args) {
     if (this._events.hasOwnProperty(event_name)) {
         var callbacks = this._events[event_name], i;
         for (i = 0; i < callbacks.length; i++) {
@@ -22,14 +22,14 @@ Board.prototype.dispatchEvent = function(event_name, args) {
     }
 }
 
-Board.prototype.clearAnnotations = function() {
+go.Board.prototype.clearAnnotations = function() {
     this.annotations = new Array(this.size);
     for (var i = 0; i < this.stones.length; i++) {
         this.annotations[i] = new Array(this.size);
     }
 }
 
-Board.prototype.clearBoard = function() {
+go.Board.prototype.clearBoard = function() {
     this.stones = new Array(this.size);
 
     for (var i = 0; i < this.stones.length; i++) {
@@ -37,22 +37,22 @@ Board.prototype.clearBoard = function() {
     }
 }
 
-Board.prototype.changed = function() {
+go.Board.prototype.changed = function() {
     this.dispatchEvent("change");
 }
 
-Board.prototype.stoneAt = function(x, y) {
+go.Board.prototype.stoneAt = function(x, y) {
     return this.stones[x][y];
 }
 
-Board.prototype.stoneAtSgf = function(sgf_coord) {
-    var xy = sgfToXy(sgf_coord);
+go.Board.prototype.stoneAtSgf = function(sgf_coord) {
+    var xy = go.sgfToXy(sgf_coord);
     return this.stoneAt(xy[0], xy[1]);
 }
 
-Board.prototype.addStone = function(x, y, color, suppress_change_event) {
+go.Board.prototype.addStone = function(x, y, color, suppress_change_event) {
     if (x < this.stones.length && y < this.stones.length && !this.stones[x][y]) {
-        var stone = new Stone(x, y, this, color);
+        var stone = new go.Stone(x, y, this, color);
         this.stones[x][y] = stone;
         stone.mergeGroup();
         stone.killNeighbors();
@@ -62,12 +62,12 @@ Board.prototype.addStone = function(x, y, color, suppress_change_event) {
     }
 }
 
-Board.prototype.addStoneBySgf = function(sgf_coord, color, suppress_change_event) {
-    var xy = sgfToXy(sgf_coord);
+go.Board.prototype.addStoneBySgf = function(sgf_coord, color, suppress_change_event) {
+    var xy = go.sgfToXy(sgf_coord);
     this.addStone(xy[0], xy[1], color, suppress_change_event);
 }
 
-Board.prototype.removeStone = function(x, y, suppress_change_event) {
+go.Board.prototype.removeStone = function(x, y, suppress_change_event) {
     var stone = this.stones[x][y];
     if (stone) {
         stone.removeFromBoard();
@@ -77,12 +77,12 @@ Board.prototype.removeStone = function(x, y, suppress_change_event) {
     }
 }
 
-Board.prototype.removeStoneBySgf = function (sgf_coord, suppress_change_event) {
-    var xy = sgfToXy(sgf_coord);
+go.Board.prototype.removeStoneBySgf = function (sgf_coord, suppress_change_event) {
+    var xy = go.sgfToXy(sgf_coord);
     this.removeStone(xy[0], xy[1], suppress_change_event);
 }
 
-Board.prototype.serialize = function() {
+go.Board.prototype.serialize = function() {
     var raw_board = {w: [], b: [], size: this.size}, stone, i, j;
     for (i = 0; i < this.stones.length; i++) {
         for (j = 0; j < this.stones.length; j++) {
@@ -95,7 +95,7 @@ Board.prototype.serialize = function() {
     return JSON.stringify(raw_board);
 }
 
-Board.prototype.deserialize = function(raw) {
+go.Board.prototype.deserialize = function(raw) {
     if (typeof raw === "string") {
         raw = JSON.parse(raw);
     }
@@ -117,7 +117,7 @@ Board.prototype.deserialize = function(raw) {
     this.changed();
 }
 
-function Stone(x, y, board, color) {
+go.Stone = function(x, y, board, color) {
     this.x = x;
     this.y = y;
     this.board = board;
@@ -125,7 +125,7 @@ function Stone(x, y, board, color) {
     this.group = null;
 }
 
-Stone.prototype.neighbors = function(action, array_fn) {
+go.Stone.prototype.neighbors = function(action, array_fn) {
     array_fn = array_fn || "map";
     var neighbor_coords = [
         {x: this.x - 1, y: this.y},
@@ -140,7 +140,7 @@ Stone.prototype.neighbors = function(action, array_fn) {
         });
 }
 
-Stone.prototype.rediscoverGroup = function(new_group) {
+go.Stone.prototype.rediscoverGroup = function(new_group) {
     if (!new_group) {
         new_group = new Group();
     }
@@ -161,7 +161,7 @@ Stone.prototype.rediscoverGroup = function(new_group) {
     this.neighbors(reassignNeighbors);
 }
 
-Stone.prototype.mergeGroup = function() {
+go.Stone.prototype.mergeGroup = function() {
     var merge_neighbor = function(neighbor) {
         if (neighbor && neighbor.color == this.color) {
             var neighbor_group = neighbor.group;
@@ -174,14 +174,14 @@ Stone.prototype.mergeGroup = function() {
                 neighbor.group = this.group;
                 this.group.stones.push(neighbor);
             } else {
-                neighbor.group = this.group = new Group([this, neighbor]);
+                neighbor.group = this.group = new go.Group([this, neighbor]);
             }
         }
     };
     this.neighbors(merge_neighbor);
 }
 
-Stone.prototype.killNeighbors = function() {
+go.Stone.prototype.killNeighbors = function() {
     var kill_neighbor = function(neighbor) {
         if (neighbor && neighbor.color != this.color) {
             var group = neighbor.group || neighbor;
@@ -193,21 +193,21 @@ Stone.prototype.killNeighbors = function() {
     this.neighbors(kill_neighbor);
 }
 
-Stone.prototype.hasLiberty = function() {
+go.Stone.prototype.hasLiberty = function() {
     var is_neighbor_undefined = function(neighbor) {
         return !neighbor;
     }
     return this.neighbors(is_neighbor_undefined, "some");
 }
 
-Stone.prototype.die = function() {
+go.Stone.prototype.die = function() {
     // FIXME - weird signature - this is because of an overloading
     // perhaps an inheritance structure is in order?
     this.removeFromBoard();
     return [[this]];
 }
 
-Stone.prototype.removeFromBoard = function() {
+go.Stone.prototype.removeFromBoard = function() {
     this.board.stones[this.x][this.y] = null;
     if (this.group) {
         this.group = null;
@@ -219,7 +219,7 @@ Stone.prototype.removeFromBoard = function() {
     }
 }
 
-function Group(stones) {
+go.Group = function(stones) {
     if (!stones) {
         stones = []
     }
@@ -230,7 +230,7 @@ function Group(stones) {
     }
 }
 
-Group.prototype.setNewGroup = function(group) {
+go.Group.prototype.setNewGroup = function(group) {
     var i;
     if (this != group) {
         for (i = 0; i < this.stones.length; i++) {
@@ -240,13 +240,13 @@ Group.prototype.setNewGroup = function(group) {
     }
 }
 
-Group.prototype.hasLiberty = function() {
+go.Group.prototype.hasLiberty = function() {
     return this.stones.some(function(stone) {
         return stone.hasLiberty();
     });
 }
 
-Group.prototype.die = function() {
+go.Group.prototype.die = function() {
     this.stones.forEach(function(stone) {
         stone.group = null;
         stone.removeFromBoard();

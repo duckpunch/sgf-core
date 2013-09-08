@@ -50,7 +50,7 @@ function treeStructureMatches(root_1, root_2) {
 }
 
 function mv(position) {
-    var move = new Move();
+    var move = new go.Move();
     move.position = position || null;
     return move;
 }
