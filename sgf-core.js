@@ -1,5 +1,7 @@
 /*! sgf-core - v0.1.0 - 2013-09-08
 * Copyright (c) 2013 ; Licensed  */
+var go = {};
+
 // Adapted from http://osteele.com/sources/javascript/functional/
 // Also http://ejohn.org/blog/partial-functions-in-javascript/
 go.partial = function(fn, default_args, _this) {
